@@ -107,19 +107,40 @@ export const EnvironmentalAnalyzer = () => {
       ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
       // UI Config
-      const padding = { top: 30, bottom: 40, left: 45, right: 15 };
+      const padding = { top: 30, bottom: 50, left: 50, right: 15 };
       const chartWidth = logicalWidth - padding.left - padding.right;
       const chartHeight = logicalHeight - padding.top - padding.bottom;
-      
+
+      // Constants for human hearing range
+      const HUMAN_HEARING_MIN = 20;  // Hz - lower limit of human hearing
+      const HUMAN_HEARING_MAX = 20000; // Hz - upper limit of human hearing
+      const MAX_FREQ_DISPLAY = 20000;  // Display full range up to 20kHz
+
       // Draw Grid & Axes
       ctx.strokeStyle = '#f1f5f9';
       ctx.fillStyle = '#94a3b8';
       ctx.font = '500 10px Inter';
       ctx.textAlign = 'right';
 
-      // Y-axis (dB) - From -100 to 0
-      const dBSteps = [-100, -75, -50, -25, 0];
-      dBSteps.forEach(db => {
+      // Y-axis (dB) - From -100 to 0 with major and minor ticks
+      const dBMajorSteps = [-100, -75, -50, -25, 0];
+      const dBMinorSteps = [-95, -90, -85, -80, -70, -65, -60, -55, -45, -40, -35, -30, -20, -15, -10, -5];
+
+      // Minor dB ticks (faint)
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 0.5;
+      dBMinorSteps.forEach(db => {
+        const y = padding.top + chartHeight - ((db + 100) / 100) * chartHeight;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(padding.left + 5, y);
+        ctx.stroke();
+      });
+
+      // Major dB ticks and gridlines
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      dBMajorSteps.forEach(db => {
         const y = padding.top + chartHeight - ((db + 100) / 100) * chartHeight;
         ctx.beginPath();
         ctx.moveTo(padding.left, y);
@@ -128,46 +149,96 @@ export const EnvironmentalAnalyzer = () => {
         ctx.fillText(`${db}`, padding.left - 8, y + 3);
       });
 
-      // X-axis (Frequency)
+      // X-axis (Frequency) with major and minor ticks
       ctx.textAlign = 'center';
       const sampleRate = audioContextRef.current?.sampleRate || 44100;
-      const maxFreqVisible = 10000; // Standard audiometer range
-      const freqSteps = [125, 1000, 4000, 8000, 10000];
-      
-      freqSteps.forEach(freq => {
-        const x = padding.left + (freq / maxFreqVisible) * chartWidth;
-        if (x <= padding.left + chartWidth) {
+
+      // Major frequency ticks (labeled)
+      const freqMajorSteps = [20, 50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000, 20000];
+
+      // Minor frequency ticks (unlabeled) - more granular
+      const freqMinorSteps = [25, 75, 150, 300, 600, 1500, 3000, 6000, 12000];
+
+      // Minor frequency ticks
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 0.5;
+      freqMinorSteps.forEach(freq => {
+        const x = padding.left + (freq / MAX_FREQ_DISPLAY) * chartWidth;
+        if (x >= padding.left && x <= padding.left + chartWidth) {
+          ctx.beginPath();
+          ctx.moveTo(x, padding.top + chartHeight);
+          ctx.lineTo(x, padding.top + chartHeight + 5);
+          ctx.stroke();
+        }
+      });
+
+      // Major frequency ticks and gridlines
+      ctx.strokeStyle = '#f1f5f9';
+      ctx.lineWidth = 1;
+      freqMajorSteps.forEach(freq => {
+        const x = padding.left + (freq / MAX_FREQ_DISPLAY) * chartWidth;
+        if (x >= padding.left && x <= padding.left + chartWidth) {
           ctx.beginPath();
           ctx.moveTo(x, padding.top);
           ctx.lineTo(x, padding.top + chartHeight);
           ctx.stroke();
-          ctx.fillText(freq >= 1000 ? `${freq/1000}k` : freq.toString(), x, padding.top + chartHeight + 15);
+
+          // Label
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '500 10px Inter';
+          ctx.fillText(freq >= 1000 ? `${(freq/1000).toFixed(0)}k` : freq.toString(), x, padding.top + chartHeight + 20);
         }
       });
 
+      // Draw vertical red lines marking the normal human hearing range
+      // Left boundary: 20 Hz
+      const x20Hz = padding.left + (HUMAN_HEARING_MIN / MAX_FREQ_DISPLAY) * chartWidth;
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]); // Dashed line
+      ctx.beginPath();
+      ctx.moveTo(x20Hz, padding.top);
+      ctx.lineTo(x20Hz, padding.top + chartHeight);
+      ctx.stroke();
+
+      // Right boundary: 20 kHz
+      const x20kHz = padding.left + (HUMAN_HEARING_MAX / MAX_FREQ_DISPLAY) * chartWidth;
+      ctx.beginPath();
+      ctx.moveTo(x20kHz, padding.top);
+      ctx.lineTo(x20kHz, padding.top + chartHeight);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Label the hearing range boundaries
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 9px Inter';
+      ctx.textAlign = 'center';
+      ctx.fillText('20 Hz', x20Hz, padding.top + 12);
+      ctx.fillText('20 kHz', x20kHz, padding.top + 12);
+
       // Draw real-time spectrum
       ctx.beginPath();
-      ctx.strokeStyle = '#0d9488'; 
+      ctx.strokeStyle = '#0d9488';
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
-      
+
       let maxVal = -Infinity;
       let maxFreqIdx = 0;
 
       for (let i = 0; i < bufferLength; i++) {
         const db = dataArray[i];
         const freq = (i * sampleRate) / (bufferLength * 2);
-        
-        if (freq > maxFreqVisible) break;
 
-        const x = padding.left + (freq / maxFreqVisible) * chartWidth;
+        if (freq > MAX_FREQ_DISPLAY) break;
+
+        const x = padding.left + (freq / MAX_FREQ_DISPLAY) * chartWidth;
         const y = padding.top + chartHeight - ((db + 100) / 100) * chartHeight;
 
         if (db > maxVal) {
           maxVal = db;
           maxFreqIdx = i;
         }
-        
+
         if (i === 0) {
           ctx.moveTo(x, y);
         } else {
@@ -195,22 +266,22 @@ export const EnvironmentalAnalyzer = () => {
         }, {} as Record<number, number>);
 
         const sortedFreqs = Object.keys(combinedResults).map(Number).sort((a, b) => a - b);
-        
+
         ctx.beginPath();
         ctx.fillStyle = 'rgba(239, 68, 68, 0.12)';
         ctx.moveTo(padding.left, padding.top + chartHeight);
-        
+
         sortedFreqs.forEach((freq, i) => {
-          const x = padding.left + (freq / maxFreqVisible) * chartWidth;
+          const x = padding.left + (freq / MAX_FREQ_DISPLAY) * chartWidth;
           const lossDb = combinedResults[freq];
           // Scale lossDb (20-85 clinically) to chart's 0-100dB range
           const y = padding.top + chartHeight - ((lossDb) / 85) * chartHeight;
-          
+
           if (x <= padding.left + chartWidth) {
             ctx.lineTo(x, y);
           }
         });
-        
+
         ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
         ctx.closePath();
         ctx.fill();
