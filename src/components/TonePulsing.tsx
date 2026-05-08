@@ -42,28 +42,28 @@ const TonePulsingComponent: React.FC<TonePulsingProps> = ({
         </div>
       </div>
 
-      <div className="text-center space-y-1">
-        <h3 className="text-lg font-bold">Can you hear this?</h3>
-        <p className="text-sm text-accent-sage">ML Estimate: {currentDb} dB SPL</p>
-        <div className="flex gap-1 justify-center mt-2">
+      <div className="text-center space-y-2">
+        <h3 className="text-2xl font-bold">Can you hear this?</h3>
+        <p className="text-lg text-accent-sage">ML Estimate: {currentDb} dB SPL</p>
+        <div className="flex gap-1 justify-center mt-3">
           {testHistory.slice(-5).map((h, i) => (
-            <div key={i} className={`w-1 h-1 rounded-full ${h.heard ? 'bg-teal-400' : 'bg-slate-200'}`} />
+            <div key={i} className={`w-2 h-2 rounded-full ${h.heard ? 'bg-teal-400' : 'bg-slate-200'}`} />
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 w-full pb-4">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="flex flex-col gap-4 w-full pb-4">
+        <div className="grid grid-cols-2 gap-4">
           <Button
             variant="secondary"
             onClick={onPlayTone}
             disabled={isTonePlaying}
-            className="flex items-center justify-center gap-2 h-14"
+            className="flex items-center justify-center gap-3 h-20 text-lg"
           >
-            <Play size={18} fill="currentColor" /> Play
+            <Play size={24} fill="currentColor" /> Play
           </Button>
-          <Button onClick={onHeard} className="flex items-center justify-center gap-2 h-14">
-            <CheckCircle2 size={18} /> I Hear It
+          <Button onClick={onHeard} className="flex items-center justify-center gap-3 h-20 text-lg">
+            <CheckCircle2 size={24} /> I Hear It
           </Button>
         </div>
 
@@ -71,10 +71,10 @@ const TonePulsingComponent: React.FC<TonePulsingProps> = ({
           variant="ghost"
           onClick={onNotHeard}
           disabled={isTonePlaying}
-          className="w-full text-slate-500 border border-slate-100 h-16 text-sm flex flex-col items-center justify-center gap-1 shadow-sm active:bg-slate-50"
+          className="w-full text-slate-500 border border-slate-100 h-20 text-base flex flex-col items-center justify-center gap-2 shadow-sm active:bg-slate-50"
         >
-          <span className="font-semibold">{currentDb >= maxDb ? "No Response" : "I can't hear it"}</span>
-          <span className="text-[10px] uppercase font-bold opacity-40">{currentDb >= maxDb ? "Next Frequency" : "Increase Volume"}</span>
+          <span className="font-semibold text-lg">{currentDb >= maxDb ? "No Response" : "I can't hear it"}</span>
+          <span className="text-xs uppercase font-bold opacity-40">{currentDb >= maxDb ? "Next Frequency" : "Increase Volume"}</span>
         </Button>
       </div>
     </div>

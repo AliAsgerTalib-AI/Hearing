@@ -207,24 +207,24 @@ export const HearingTest = () => {
               <Volume2 size={42} strokeWidth={1.5} />
             </div>
             
-            <div className="space-y-3">
-              <h1 className="text-3xl font-serif">Pure Tone Check-up</h1>
-              <p className="text-accent-sage">Find a quiet environment and use your best quality headphones for an accurate reading.</p>
+            <div className="space-y-4">
+              <h1 className="text-5xl font-serif">Pure Tone Check-up</h1>
+              <p className="text-lg text-accent-sage">Find a quiet environment and use your best quality headphones for an accurate reading.</p>
             </div>
 
-            <Card className="text-left space-y-4">
+            <Card className="text-left space-y-4 p-6">
               <div className="flex items-start gap-4">
-                <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
-                  <Info size={20} />
+                <div className="p-3 bg-slate-100 rounded-lg text-slate-500">
+                  <Info size={28} />
                 </div>
-                <div>
-                  <h4 className="font-medium">Instructions</h4>
-                  <p className="text-sm text-slate-500">We will play tones at different frequencies. Gradually increase the volume until you can just barely hear the pulse.</p>
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-lg">Instructions</h4>
+                  <p className="text-base text-slate-500">We will play tones at different frequencies. Gradually increase the volume until you can just barely hear the pulse.</p>
                 </div>
               </div>
             </Card>
 
-            <Button onClick={startTest} className="w-full">
+            <Button onClick={startTest} className="w-full h-16 text-xl">
               Get Started
             </Button>
           </motion.div>
@@ -272,9 +272,9 @@ export const HearingTest = () => {
                  <Headphones size={64} strokeWidth={1} />
               </div>
 
-              <div className="space-y-2">
-                <h2 className="text-3xl font-serif capitalize">{currentSide} Ear Test</h2>
-                <p className="text-accent-sage max-w-[280px] mx-auto">
+              <div className="space-y-3">
+                <h2 className="text-4xl font-serif capitalize">{currentSide} Ear Test</h2>
+                <p className="text-lg text-accent-sage max-w-[280px] mx-auto">
                   {currentSide === 'both'
                     ? "We will now test both ears simultaneously to assess binaural balance."
                     : `Please focus your attention on your ${currentSide} ear.`}
@@ -282,10 +282,10 @@ export const HearingTest = () => {
               </div>
 
               <div className="flex flex-col w-full gap-4">
-                 <div className="p-4 bg-slate-50 rounded-2xl text-[11px] text-slate-500 uppercase font-bold tracking-widest border border-slate-100 italic">
+                 <div className="p-5 bg-slate-50 rounded-2xl text-sm text-slate-500 uppercase font-bold tracking-widest border border-slate-100 italic">
                    Ensure your headphones are correctly oriented
                  </div>
-                 <Button onClick={() => setStep('testing')} className="h-16 text-lg w-full">
+                 <Button onClick={() => setStep('testing')} className="h-20 text-xl w-full">
                    Start {currentSide} Ear Sweep
                  </Button>
               </div>

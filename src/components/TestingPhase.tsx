@@ -80,12 +80,12 @@ const TestingPhaseComponent: React.FC<TestingPhaseProps> = ({
       <div className="space-y-4">
         <div className="flex justify-between items-end">
           <div className="space-y-1">
-            <div className="text-[10px] uppercase font-bold tracking-widest text-accent-teal">Current Phase</div>
-            <div className="text-2xl font-serif capitalize">{currentSide} Ear</div>
+            <div className="text-xs uppercase font-bold tracking-widest text-accent-teal">Current Phase</div>
+            <div className="text-4xl font-serif capitalize">{currentSide} Ear</div>
           </div>
           <div className="text-right">
-            <div className="text-[10px] uppercase font-bold tracking-widest text-accent-sage">Progress</div>
-            <div className="text-sm font-medium">
+            <div className="text-xs uppercase font-bold tracking-widest text-accent-sage">Progress</div>
+            <div className="text-xl font-medium">
               {currentTestCount} / {totalTests}
             </div>
           </div>
@@ -107,7 +107,7 @@ const TestingPhaseComponent: React.FC<TestingPhaseProps> = ({
       <Button
         variant="ghost"
         onClick={onFinishEarly}
-        className="w-full text-slate-400 h-10 text-[10px] uppercase tracking-widest font-bold"
+        className="w-full text-slate-400 h-14 text-sm uppercase tracking-widest font-bold"
       >
         Finish & Analyze Results
       </Button>

@@ -34,18 +34,18 @@ const DemographicsScreenComponent = ({ onComplete }: DemographicsScreenProps) =>
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
-      <div className="text-center space-y-3">
-        <div className="w-16 h-16 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-blue-600">
-          <User size={32} />
+      <div className="text-center space-y-4">
+        <div className="w-20 h-20 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-blue-600">
+          <User size={40} />
         </div>
-        <h2 className="text-2xl font-serif">Clinical Profile</h2>
-        <p className="text-accent-sage text-sm">Age and biological sex significantly influence auditory baseline expectations.</p>
+        <h2 className="text-3xl font-serif">Clinical Profile</h2>
+        <p className="text-accent-sage text-base">Age and biological sex significantly influence auditory baseline expectations.</p>
       </div>
 
-      <Card className="space-y-6">
-        <div className="space-y-2">
-          <label htmlFor="age-input" className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
-            <Calendar size={14} /> Biological Age
+      <Card className="space-y-6 p-6">
+        <div className="space-y-3">
+          <label htmlFor="age-input" className="text-sm font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
+            <Calendar size={18} /> Biological Age
           </label>
           <input
             id="age-input"
@@ -70,18 +70,18 @@ const DemographicsScreenComponent = ({ onComplete }: DemographicsScreenProps) =>
           )}
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
-            <Users size={14} /> Biological Sex
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
+            <Users size={18} /> Biological Sex
           </legend>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-3">
             {(['male', 'female', 'other'] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSex(s)}
                 aria-label={`Select ${s}`}
                 aria-pressed={sex === s}
-                className={`h-12 rounded-xl border-2 transition-all capitalize text-sm font-medium ${
+                className={`h-16 rounded-xl border-2 transition-all capitalize text-base font-semibold ${
                   sex === s
                     ? 'border-accent-teal bg-teal-50 text-accent-teal'
                     : 'border-slate-100 text-slate-400 hover:border-slate-200'
@@ -98,7 +98,7 @@ const DemographicsScreenComponent = ({ onComplete }: DemographicsScreenProps) =>
         <Button
           disabled={!ageValidation.valid}
           onClick={() => onComplete({ age: parseInt(age, 10), sex })}
-          className="w-full"
+          className="w-full h-16 text-lg"
         >
           Continue calibration
         </Button>

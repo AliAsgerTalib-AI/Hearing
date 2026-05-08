@@ -26,67 +26,67 @@ export const DeviceCalibration = ({ onSelect }: DeviceCalibrationProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
-      <div className="text-center space-y-3">
-        <h2 className="text-2xl font-serif">Setup Audio Device</h2>
-        <p className="text-accent-sage text-sm">For clinical accuracy, pure-tone audiometry requires specialized calibration.</p>
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-serif">Setup Audio Device</h2>
+        <p className="text-accent-sage text-base">For clinical accuracy, pure-tone audiometry requires specialized calibration.</p>
       </div>
 
-      <div className="grid gap-3">
+      <div className="grid gap-4">
         {devices.map((device) => (
           <button
             key={device.id}
             onClick={() => setSelected(device.id)}
-            className={`flex items-center gap-4 p-5 rounded-3xl border-2 text-left transition-all ${
-              selected === device.id 
-                ? 'border-accent-teal bg-teal-50/30' 
+            className={`flex items-center gap-5 p-6 rounded-3xl border-2 text-left transition-all ${
+              selected === device.id
+                ? 'border-accent-teal bg-teal-50/30'
                 : 'border-slate-100 bg-white hover:border-slate-200'
             }`}
           >
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selected === device.id ? 'bg-accent-teal text-white' : 'bg-slate-50 text-slate-400'}`}>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${selected === device.id ? 'bg-accent-teal text-white' : 'bg-slate-50 text-slate-400'}`}>
               {device.icon}
             </div>
             <div className="flex-1">
-              <div className="font-semibold">{device.label}</div>
-              <div className={`text-xs ${device.warning ? 'text-amber-600' : 'text-accent-sage'}`}>{device.sub}</div>
+              <div className="font-semibold text-lg">{device.label}</div>
+              <div className={`text-sm ${device.warning ? 'text-amber-600' : 'text-accent-sage'}`}>{device.sub}</div>
             </div>
           </button>
         ))}
       </div>
 
       {selected && selected !== 'speakers' && (
-        <div className="space-y-3">
-          <Card className="flex items-center justify-between p-4 bg-slate-50 border-none">
+        <div className="space-y-4">
+          <Card className="flex items-center justify-between p-5 bg-slate-50 border-none">
             <div className="flex items-center gap-3">
-              <Info size={18} className="text-accent-sage" />
-              <span className="text-sm font-medium">Noise Cancelling Active?</span>
+              <Info size={24} className="text-accent-sage" />
+              <span className="text-base font-medium">Noise Cancelling Active?</span>
             </div>
-            <button 
+            <button
               onClick={() => setNc(!nc)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${nc ? 'bg-accent-teal' : 'bg-slate-200'}`}
+              className={`w-14 h-8 rounded-full transition-colors relative ${nc ? 'bg-accent-teal' : 'bg-slate-200'}`}
             >
-              <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${nc ? 'translate-x-6' : ''}`} />
+              <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${nc ? 'translate-x-6' : ''}`} />
             </button>
           </Card>
-          
-          <div className="bg-amber-50/50 p-4 rounded-2xl flex gap-3 text-[11px] text-amber-700 leading-tight">
-            <Smartphone size={16} className="shrink-0" />
+
+          <div className="bg-amber-50/50 p-5 rounded-2xl flex gap-3 text-base text-amber-700 leading-relaxed">
+            <Smartphone size={20} className="shrink-0 flex-shrink-0" />
             <span>If you hear a background hiss in your earbuds, set your phone volume to 75% and allow the app to control the testing floor.</span>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         <Button
           disabled={!selected}
           onClick={() => onSelect(selected!, nc)}
-          className="w-full"
+          className="w-full h-16 text-lg"
         >
           Confirm Settings
         </Button>
         <Button
           onClick={() => onSelect('headphones', false)}
           variant="secondary"
-          className="w-full"
+          className="w-full h-16 text-lg"
         >
           Skip & Use Defaults
         </Button>

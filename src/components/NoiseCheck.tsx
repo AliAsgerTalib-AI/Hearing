@@ -79,12 +79,12 @@ export const NoiseCheck = ({ onPass, onRetry }: NoiseCheckProps) => {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-8"
     >
-      <div className="text-center space-y-3">
-        <div className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center transition-colors duration-500 ${isQuietEnough ? 'bg-teal-50 text-accent-teal' : 'bg-amber-50 text-amber-600'}`}>
-          {isMeasuring ? <Mic className="animate-pulse" size={32} /> : (isQuietEnough ? <CheckCircle2 size={32} /> : <MicOff size={32} />)}
+      <div className="text-center space-y-4">
+        <div className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center transition-colors duration-500 ${isQuietEnough ? 'bg-teal-50 text-accent-teal' : 'bg-amber-50 text-amber-600'}`}>
+          {isMeasuring ? <Mic className="animate-pulse" size={40} /> : (isQuietEnough ? <CheckCircle2 size={40} /> : <MicOff size={40} />)}
         </div>
-        <h2 className="text-2xl font-serif">Environment Check</h2>
-        <p className="text-accent-sage text-sm">We're measuring the noise in your room.</p>
+        <h2 className="text-3xl font-serif">Environment Check</h2>
+        <p className="text-accent-sage text-base">We're measuring the noise in your room.</p>
       </div>
 
       <Card className="p-8 flex flex-col items-center gap-6">
@@ -113,22 +113,22 @@ export const NoiseCheck = ({ onPass, onRetry }: NoiseCheckProps) => {
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-serif">{ambientDb}</span>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-accent-sage">Decibels</span>
+            <span className="text-6xl font-serif">{ambientDb}</span>
+            <span className="text-sm uppercase tracking-widest font-bold text-accent-sage">Decibels</span>
           </div>
         </div>
 
         {isMeasuring ? (
-          <div className="flex items-center gap-2 text-slate-400 text-sm italic">
-            <Loader2 size={16} className="animate-spin" />
+          <div className="flex items-center gap-3 text-slate-400 text-base italic">
+            <Loader2 size={20} className="animate-spin" />
             Sampling background sounds...
           </div>
         ) : (
           <div className="text-center">
             {isQuietEnough ? (
-              <p className="text-accent-teal font-medium">Perfectly quiet. Ready to proceed.</p>
+              <p className="text-accent-teal font-semibold text-lg">Perfectly quiet. Ready to proceed.</p>
             ) : (
-              <p className="text-amber-600 font-medium">Room is a bit loud. Try a quieter spot.</p>
+              <p className="text-amber-600 font-semibold text-lg">Room is a bit loud. Try a quieter spot.</p>
             )}
           </div>
         )}
@@ -141,15 +141,15 @@ export const NoiseCheck = ({ onPass, onRetry }: NoiseCheckProps) => {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3">
-        <Button 
-          disabled={isMeasuring || (!isQuietEnough && !error)} 
+      <div className="flex flex-col gap-4">
+        <Button
+          disabled={isMeasuring || (!isQuietEnough && !error)}
           onClick={() => onPass(ambientDb)}
-          className="w-full"
+          className="w-full h-16 text-lg"
         >
           {isQuietEnough ? 'Start Calibration' : 'Continue Anyway'}
         </Button>
-        <Button variant="ghost" onClick={onRetry} className="w-full text-slate-400">
+        <Button variant="ghost" onClick={onRetry} className="w-full h-16 text-lg text-slate-400">
           Re-check Noise Level
         </Button>
       </div>

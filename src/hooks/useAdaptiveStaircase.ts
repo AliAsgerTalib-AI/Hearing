@@ -41,8 +41,9 @@ export function useAdaptiveStaircase({
       const previouslyHeardAtThisLevel = state.history.some(
         h => h.db === state.currentDb && h.heard
       );
+      const atFloor = state.currentDb <= minDb;
 
-      if (wasAscending && previouslyHeardAtThisLevel) {
+      if ((wasAscending && previouslyHeardAtThisLevel) || atFloor) {
         const confirmedThreshold = state.currentDb;
         setState(prev => ({
           ...prev,
