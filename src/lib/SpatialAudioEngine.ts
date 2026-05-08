@@ -45,7 +45,7 @@ export class HRTFFilter {
    * Apply HRTF based on source position
    * Simulates pinna filtering and head shadowing effects
    */
-  updateForPosition(azimuth: number, elevation: number): BiquadFilterNode {{
+  updateForPosition(azimuth: number, elevation: number): BiquadFilterNode {
     // Normalize angles to 0-360 and -90 to 90
     const normalizedAzimuth = ((azimuth % 360) + 360) % 360;
     const clampedElevation = Math.max(-90, Math.min(90, elevation));
