@@ -89,10 +89,6 @@ export const StorageProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  if (!isLoaded) {
-    return <>{children}</>;
-  }
-
   return (
     <StorageContext.Provider value={{ history, testResults, updateHistory, updateTestResults, clearAll }}>
       {children}
