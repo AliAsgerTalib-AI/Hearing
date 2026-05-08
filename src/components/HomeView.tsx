@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Activity, Mic2, History, Trash2, ChevronRight, Calendar } from 'lucide-react';
+import { Activity, Mic2, History, Trash2 } from 'lucide-react';
 import { Card, Button } from './ui/basic';
-import { Progress } from './ui/progress';
 import { useStorage } from '../contexts/StorageContext';
+import { ProgressionPanel } from './ProgressionPanel';
 
 export const HomeView = ({ onStartTest }: { onStartTest: () => void }) => {
   const { history, clearAll } = useStorage();
@@ -67,39 +67,7 @@ export const HomeView = ({ onStartTest }: { onStartTest: () => void }) => {
           )}
         </div>
 
-        {history.length === 0 ? (
-          <div className="text-center py-12 px-6 bg-slate-50/50 rounded-3xl border border-slate-100 border-dashed">
-            <p className="text-xs text-slate-400 font-medium italic">No previous test data found. Complete your first assessment to see trends here.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {history.slice(0, 3).map((entry) => (
-              <Card key={entry.id} className="p-4 flex items-center justify-between group cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                    <Calendar size={18} />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-primary">{entry.date}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-tighter font-bold text-accent-sage">L: {entry.avgLeft}dB</span>
-                      <span className="text-[10px] text-slate-200">•</span>
-                      <span className="text-[10px] uppercase tracking-tighter font-bold text-accent-sage">R: {entry.avgRight}dB</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-slate-300 transform group-hover:translate-x-1 transition-transform">
-                  <ChevronRight size={16} />
-                </div>
-              </Card>
-            ))}
-            {history.length > 3 && (
-              <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-2">
-                + {history.length - 3} more sessions in local storage
-              </p>
-            )}
-          </div>
-        )}
+        <ProgressionPanel history={history} />
       </div>
     </div>
   );

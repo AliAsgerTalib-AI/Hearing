@@ -5,12 +5,9 @@ import { Card, Button } from './ui/basic';
 import { AudiogramChart } from './AudiogramChart';
 import { ContraindicationReport } from './ContraindicationReport';
 import { calculateThresholds } from '../lib/utils';
-
-interface TestResult {
-  side: 'left' | 'right' | 'both';
-  freq: number;
-  db: number;
-}
+import { buildReferenceChartData, interpretAgainstISO7029 } from '../lib/iso7029';
+import { analyzeFrequencyPattern, interpretFrequencyPattern } from '../lib/frequencyWeighting';
+import { TestResult } from '../types/index';
 
 interface ResultsDisplayProps {
   results: TestResult[];
@@ -28,6 +25,18 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   const { avgLeft, avgRight } = calculateThresholds(results);
 
   const hasHighFrequencyLoss = results.some(r => r.freq >= 8000 && r.db >= 60);
+
+  // Compute ISO 7029 reference data for age/sex
+  const sortedFreqs: number[] = Array.from(new Set(results.map(r => r.freq))).sort((a, b) => (a as number) - (b as number)) as number[];
+  const referenceData = demographics
+    ? buildReferenceChartData(demographics.age, demographics.sex, sortedFreqs)
+    : undefined;
+
+  // Analyze frequency pattern
+  const freqPattern = analyzeFrequencyPattern(
+    results.map(r => ({ frequency: r.freq, db: r.db }))
+  );
+  const patternInterpretation = interpretFrequencyPattern(freqPattern.pattern);
 
   return (
     <motion.div
@@ -64,7 +73,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           </div>
         </div>
         <div className="p-4 bg-white">
-          <AudiogramChart results={results} />
+          <AudiogramChart results={results} referenceData={referenceData} />
         </div>
         <div className="p-4 grid grid-cols-2 gap-4 bg-slate-50/30 border-t border-slate-100">
           <div className="space-y-1">
@@ -83,16 +92,16 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           <Sparkles size={16} /> Clinical Interpretation
         </h4>
         <div className="text-xs leading-relaxed opacity-90 space-y-2">
-          {hasHighFrequencyLoss ? (
+          <p>{patternInterpretation}</p>
+          {hasHighFrequencyLoss && (
             <p className="text-red-200 font-medium tracking-tight">
-              Significant high-frequency attenuation detected. 80dB at 8000Hz is a CRITICAL LOSS indicator. This is not
-              "strong" hearing; it requires immediate clinical verification by an Audiologist.
+              Significant high-frequency attenuation detected. 80dB at 8000Hz is a CRITICAL LOSS indicator. This requires
+              immediate clinical verification by an Audiologist.
             </p>
-          ) : (
-            <p>Your auditory response appears within age-appropriate ranges. Consistent neuro-active training is recommended.</p>
           )}
           <p className="border-t border-white/10 pt-2 text-[10px] opacity-60">
-            Note: 80dB is the hardware safety ceiling. Any "No Response" at this level is clinically significant.
+            Note: This is a screening tool, not a diagnostic device. Always consult a licensed Audiologist for formal diagnosis.
+            80dB is the hardware safety ceiling. Any "No Response" at this level is clinically significant.
           </p>
         </div>
       </div>
