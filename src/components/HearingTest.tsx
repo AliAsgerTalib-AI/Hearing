@@ -5,6 +5,7 @@ import { Card, Button } from './ui/basic';
 import { NoiseCheck } from './NoiseCheck';
 import { SafetyScreen } from './SafetyScreen';
 import { DemographicsScreen } from './DemographicsScreen';
+import { ScreeningResponse } from '../types/contraindications';
 import { DeviceCalibration, DeviceType } from './DeviceCalibration';
 import { audioEngine } from '../lib/AudioEngine';
 import { TestingPhase } from './TestingPhase';
@@ -82,7 +83,11 @@ export const HearingTest = () => {
     setStep('safety');
   };
 
-  const confirmSafety = () => {
+  const confirmSafety = (responses: ScreeningResponse) => {
+    // Store screening responses if needed for future use
+    if (responses) {
+      sessionStorage.setItem('screeningResponses', JSON.stringify(responses));
+    }
     setStep('demographics');
   };
 
