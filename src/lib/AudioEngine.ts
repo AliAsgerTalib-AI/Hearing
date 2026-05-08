@@ -13,6 +13,7 @@ export class AudioEngine {
   private oscillator: OscillatorNode | null = null;
   private gainNode: GainNode | null = null;
   private pannerNode: StereoPannerNode | null = null;
+  private activeOscillators: Array<{ osc: OscillatorNode; g: GainNode }> = [];
 
   private calibrationFactor: number = 1.0;
 
@@ -108,8 +109,20 @@ export class AudioEngine {
     g.connect(panner);
     panner.connect(this.context.destination);
 
+    // Track the oscillator so we can stop it if needed
+    this.activeOscillators.push({ osc, g });
+
     osc.start(startTime);
     osc.stop(startTime + duration);
+
+    // Clean up reference after the tone finishes
+    const stopTime = startTime + duration;
+    setTimeout(() => {
+      const index = this.activeOscillators.findIndex(item => item.osc === osc);
+      if (index !== -1) {
+        this.activeOscillators.splice(index, 1);
+      }
+    }, (stopTime - (this.context?.currentTime || 0)) * 1000 + 100);
   }
 
   /**
@@ -164,6 +177,16 @@ export class AudioEngine {
       this.gainNode = null;
       this.pannerNode = null;
     }
+
+    // Stop all active pulsed tone oscillators
+    if (this.context) {
+      const stopTime = this.context.currentTime + AUDIO_PLAYBACK.ENVELOPE_RAMP_DURATION;
+      for (const { osc, g } of this.activeOscillators) {
+        g.gain.exponentialRampToValueAtTime(AUDIO_PLAYBACK.MIN_EXPONENTIAL_GAIN, stopTime);
+        osc.stop(stopTime);
+      }
+      this.activeOscillators = [];
+    }
   }
 
   /**
@@ -171,6 +194,7 @@ export class AudioEngine {
    */
   public dispose() {
     this.stopTone();
+    this.activeOscillators = [];
     if (this.context) {
       this.context.close();
       this.context = null;
