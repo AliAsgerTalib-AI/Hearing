@@ -59,7 +59,8 @@ export interface SpatialAudioSession {
 export type BadgeId =
   | 'first_step' | 'week_warrior' | 'month_master' | 'consistency_king'
   | 'vowel_expert' | 'consonant_pro' | 'frequency_fiend'
-  | 'perfect_session' | 'milestone_100' | 'milestone_500';
+  | 'perfect_session' | 'milestone_100' | 'milestone_500'
+  | 'scenario_explorer' | 'soundcoin_saver' | 'perfect_call' | 'subway_navigator';
 
 export interface Badge {
   id: BadgeId;
@@ -93,7 +94,31 @@ export interface GamificationProgress {
     consonant: { sessions: number; accuracy: number; bestLevel: number };
     frequency: { sessions: number; accuracy: number; bestLevel: number };
   };
+  scenarioStats?: {
+    receptionist: { completions: number; bestAccuracy: number };
+    restaurant_order: { completions: number; bestAccuracy: number };
+    navigation: { completions: number; bestAccuracy: number };
+  };
   badges: Badge[];
   weeklyGoal: number; // target sessions per week
   weeklyProgress: number; // sessions completed this week
+}
+
+// ============================================================================
+// VOICE INTERACTION TYPES
+// ============================================================================
+
+export interface PhonemeTrialResult {
+  phoneme: string;
+  spokenTranscript: string;
+  matched: boolean;
+  confidence: 'exact' | 'fuzzy' | 'none';
+  timestamp: number;
+}
+
+export interface VoiceSessionData {
+  exerciseId: number;
+  perPhonemeAccuracy: Record<string, { correct: number; total: number }>;
+  voiceTrialCount: number;
+  geminiSummary: string | null;
 }

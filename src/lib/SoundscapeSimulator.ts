@@ -22,7 +22,9 @@ export type EnvironmentType =
   | 'restaurant'
   | 'train'
   | 'office'
-  | 'bathroom';
+  | 'bathroom'
+  | 'subway'
+  | 'airport';
 
 export interface EnvironmentCharacteristics {
   name: string;
@@ -95,6 +97,26 @@ export const ENVIRONMENTS: Record<EnvironmentType, EnvironmentCharacteristics> =
     dimensions: { width: 4, height: 3, depth: 6 },
     typicalSources: 2,
     difficulty: 3
+  },
+  subway: {
+    name: 'Subway Station',
+    description: 'Underground train with mechanical rumble and announcement echoes',
+    reverbTime: 1.8,
+    reverbMix: 0.5,
+    noiseFloor: 78,
+    dimensions: { width: 10, height: 8, depth: 60 },
+    typicalSources: 6,
+    difficulty: 3
+  },
+  airport: {
+    name: 'Airport Terminal',
+    description: 'Large open atrium with PA announcements and crowd noise',
+    reverbTime: 1.4,
+    reverbMix: 0.35,
+    noiseFloor: 68,
+    dimensions: { width: 50, height: 25, depth: 80 },
+    typicalSources: 7,
+    difficulty: 2
   }
 };
 
@@ -200,6 +222,23 @@ export class SoundscapeSimulator {
       // Scattered in all directions (tables everywhere)
       for (let i = 0; i < count; i++) {
         angles.push((i / count) * 360 + (Math.random() - 0.5) * 45);
+      }
+    } else if (env === ENVIRONMENTS.subway) {
+      // Clustered along tunnel axis (announcements from front/back)
+      const axisAngles = [0, 90, 180, 270];
+      for (let i = 0; i < count; i++) {
+        const baseAngle = axisAngles[i % axisAngles.length];
+        angles.push(baseAngle + (Math.random() - 0.5) * 30);
+      }
+    } else if (env === ENVIRONMENTS.airport) {
+      // Omnidirectional with slight forward cluster (PA system overhead/front)
+      for (let i = 0; i < count; i++) {
+        let angle = Math.random() * 360;
+        // Bias toward front (0°) for PA announcements
+        if (Math.random() < 0.6) {
+          angle = (Math.random() - 0.5) * 90;
+        }
+        angles.push(angle);
       }
     } else {
       // Default: even distribution

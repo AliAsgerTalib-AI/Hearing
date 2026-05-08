@@ -301,3 +301,22 @@ export function getCalibrationFactor(
       return DEVICE_CALIBRATION_FACTORS.HEADPHONES;
   }
 }
+
+// ============================================================================
+// VOICE RECOGNITION PARAMETERS
+// ============================================================================
+// Web Speech API and voice interaction configuration
+
+export const VOICE_RECOGNITION = {
+  /** Milliseconds to wait for user speech before giving up */
+  LISTEN_TIMEOUT_MS: 4000,
+
+  /** Milliseconds of feedback display before auto-advancing */
+  VOICE_FEEDBACK_DISPLAY_MS: 2000,
+
+  /** Minimum confidence threshold for fuzzy match to count */
+  FUZZY_MATCH_MAX_EDIT_DISTANCE: 1,
+
+  /** Language code for SpeechRecognition - broad accent support */
+  DEFAULT_LANG: 'en-US'
+} as const;

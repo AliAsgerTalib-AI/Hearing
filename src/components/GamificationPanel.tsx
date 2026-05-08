@@ -243,6 +243,7 @@ export const GamificationPanel = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };

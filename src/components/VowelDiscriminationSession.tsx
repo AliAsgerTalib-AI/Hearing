@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, RotateCcw, X, Music, Brain } from 'lucide-react';
+import { Play, RotateCcw, X, Music, Brain, Mic } from 'lucide-react';
 import { Button, Card } from './ui/basic';
 import { VowelDiscriminationExercise } from '../lib/VowelDiscriminationExercise';
 import { useGamification } from '../contexts/GamificationContext';
+import { useVoiceMode } from '../hooks/useVoiceMode';
+import { VoiceModeButton } from './VoiceModeButton';
+import { VoiceFeedbackSummary } from './VoiceFeedbackSummary';
+import { Switch } from '@radix-ui/react-switch';
 
 export interface VowelDiscriminationSessionProps {
   onClose: () => void;
@@ -17,12 +21,40 @@ export const VowelDiscriminationSession: React.FC<VowelDiscriminationSessionProp
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [sessionStartTime] = useState(Date.now());
   const [currentTrial, setCurrentTrial] = useState<string | null>(null);
+  const [showingSummary, setShowingSummary] = useState(false);
   const { recordSession } = useGamification();
 
   const state = exercise.getState();
   const levelConfig = exercise.getLevelConfig();
   const vowelSet = exercise.getCurrentVowelSet();
   const vowelExamples = exercise.getVowelExamples();
+
+  const {
+    isVoiceMode,
+    setIsVoiceMode,
+    isListening,
+    interimTranscript,
+    voiceError,
+    isSupported,
+    startListening,
+    perPhonemeAccuracy,
+  } = useVoiceMode({
+    exerciseType: 'vowel',
+    validAnswers: vowelSet.map((vn: string) => {
+      const allChars = ['a', 'e', 'i', 'o', 'u', 'ɑ', 'ɛ', 'ɪ', 'ɔ', 'ʊ'];
+      const matchedChar = allChars.find(
+        char => exercise['VOWELS' as any]?.find((v: any) => v.name === vn)?.char === char ||
+        exercise['VOWELS_EXTENDED' as any]?.find((v: any) => v.name === vn)?.char === char
+      );
+      return matchedChar || 'a';
+    }),
+    onMatch: (answerId: string) => {
+      handleResponse(answerId);
+    },
+    onNoMatch: () => {
+      // Already handled in voice hook with error message
+    },
+  });
 
   const handlePlayTrial = async () => {
     setIsPlaying(true);
@@ -65,12 +97,16 @@ export const VowelDiscriminationSession: React.FC<VowelDiscriminationSessionProp
       );
     }
 
-    onClose();
+    if (Object.keys(perPhonemeAccuracy).length > 0) {
+      setShowingSummary(true);
+    } else {
+      onClose();
+    }
   };
 
   return (
     <AnimatePresence>
-      {sessionActive && (
+      {sessionActive && !showingSummary && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -96,12 +132,24 @@ export const VowelDiscriminationSession: React.FC<VowelDiscriminationSessionProp
                     <p className="text-xs opacity-90">Sound identification training</p>
                   </div>
                 </div>
-                <button
-                  onClick={handleEndSession}
-                  className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSupported && (
+                    <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
+                      <Mic size={16} />
+                      <Switch
+                        checked={isVoiceMode}
+                        onCheckedChange={setIsVoiceMode}
+                        className="h-6 w-10 bg-white/30 rounded-full relative data-[state=checked]:bg-green-400 transition-colors"
+                      />
+                    </div>
+                  )}
+                  <button
+                    onClick={handleEndSession}
+                    className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -178,36 +226,47 @@ export const VowelDiscriminationSession: React.FC<VowelDiscriminationSessionProp
                       exit={{ opacity: 0, y: -10 }}
                       className="space-y-3"
                     >
-                      <p className="text-center text-slate-600 text-sm font-medium">Which vowel sound did you hear?</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {vowelSet.map(vowelName => (
-                          <motion.div key={vowelName} whileHover={{ scale: 1.05 }}>
-                            <Button
-                              onClick={() => {
-                                const vowelData = vowelSet.find(v => v === vowelName);
-                                // Find the character for this vowel name
-                                const allChars = ['a', 'e', 'i', 'o', 'u', 'ɑ', 'ɛ', 'ɪ', 'ɔ', 'ʊ'];
-                                const vowelExampleKeys = Object.keys(vowelExamples);
-                                const matchedChar = allChars.find(
-                                  char => exercise['VOWELS' as any]?.find(
-                                    (v: any) => v.name === vowelName
-                                  )?.char === char ||
-                                  exercise['VOWELS_EXTENDED' as any]?.find(
-                                    (v: any) => v.name === vowelName
-                                  )?.char === char
-                                );
-                                handleResponse(matchedChar || state.correctAnswer);
-                              }}
-                              className="w-full h-16 bg-slate-100 text-slate-700 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold text-lg transition-colors"
-                            >
-                              <div>
-                                <div className="text-sm">{vowelName}</div>
-                                <div className="text-xs opacity-75">({vowelExamples[vowelName] || ''})</div>
-                              </div>
-                            </Button>
-                          </motion.div>
-                        ))}
-                      </div>
+                      <p className="text-center text-slate-600 text-sm font-medium">
+                        {isVoiceMode ? 'Speak the vowel sound you heard' : 'Which vowel sound did you hear?'}
+                      </p>
+                      {isVoiceMode ? (
+                        <VoiceModeButton
+                          isListening={isListening}
+                          error={voiceError}
+                          interimTranscript={interimTranscript}
+                          onTap={startListening}
+                        />
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {vowelSet.map(vowelName => (
+                            <motion.div key={vowelName} whileHover={{ scale: 1.05 }}>
+                              <Button
+                                onClick={() => {
+                                  const vowelData = vowelSet.find(v => v === vowelName);
+                                  // Find the character for this vowel name
+                                  const allChars = ['a', 'e', 'i', 'o', 'u', 'ɑ', 'ɛ', 'ɪ', 'ɔ', 'ʊ'];
+                                  const vowelExampleKeys = Object.keys(vowelExamples);
+                                  const matchedChar = allChars.find(
+                                    char => exercise['VOWELS' as any]?.find(
+                                      (v: any) => v.name === vowelName
+                                    )?.char === char ||
+                                    exercise['VOWELS_EXTENDED' as any]?.find(
+                                      (v: any) => v.name === vowelName
+                                    )?.char === char
+                                  );
+                                  handleResponse(matchedChar || state.correctAnswer);
+                                }}
+                                className="w-full h-16 bg-slate-100 text-slate-700 hover:bg-blue-200 hover:text-blue-700 rounded-lg font-semibold text-lg transition-colors"
+                              >
+                                <div>
+                                  <div className="text-sm">{vowelName}</div>
+                                  <div className="text-xs opacity-75">({vowelExamples[vowelName] || ''})</div>
+                                </div>
+                              </Button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   )}
 
@@ -268,6 +327,19 @@ export const VowelDiscriminationSession: React.FC<VowelDiscriminationSessionProp
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {showingSummary && (
+        <VoiceFeedbackSummary
+          perPhonemeAccuracy={perPhonemeAccuracy}
+          exerciseType="vowel"
+          sessionDuration={Math.round((Date.now() - sessionStartTime) / 1000)}
+          onClose={() => {
+            setShowingSummary(false);
+            setSessionActive(false);
+            onClose();
+          }}
+        />
       )}
     </AnimatePresence>
   );

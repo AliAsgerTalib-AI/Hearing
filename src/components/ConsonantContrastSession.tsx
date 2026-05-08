@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, RotateCcw, X, Volume2, Brain, TrendingUp } from 'lucide-react';
+import { Play, RotateCcw, X, Volume2, Brain, TrendingUp, Mic } from 'lucide-react';
 import { Button, Card } from './ui/basic';
 import { ConsonantContrastExercise } from '../lib/ConsonantContrastExercise';
 import { useGamification } from '../contexts/GamificationContext';
+import { useVoiceMode } from '../hooks/useVoiceMode';
+import { VoiceModeButton } from './VoiceModeButton';
+import { VoiceFeedbackSummary } from './VoiceFeedbackSummary';
+import { Switch } from '@radix-ui/react-switch';
 
 export interface ConsonantContrastSessionProps {
   onClose: () => void;
@@ -17,11 +21,32 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null);
   const [sessionStartTime] = useState(Date.now());
   const [currentTrial, setCurrentTrial] = useState<string | null>(null);
+  const [showingSummary, setShowingSummary] = useState(false);
   const { recordSession } = useGamification();
 
   const state = exercise.getState();
   const levelConfig = exercise.getLevelConfig();
   const consonantSet = exercise.getCurrentConsonantSet();
+
+  const {
+    isVoiceMode,
+    setIsVoiceMode,
+    isListening,
+    interimTranscript,
+    voiceError,
+    isSupported,
+    startListening,
+    perPhonemeAccuracy,
+  } = useVoiceMode({
+    exerciseType: 'consonant',
+    validAnswers: consonantSet as string[],
+    onMatch: (answerId: string) => {
+      handleResponse(answerId);
+    },
+    onNoMatch: () => {
+      // Already handled in voice hook with error message
+    },
+  });
 
   const handlePlayTrial = async () => {
     setIsPlaying(true);
@@ -64,7 +89,11 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
       );
     }
 
-    onClose();
+    if (Object.keys(perPhonemeAccuracy).length > 0) {
+      setShowingSummary(true);
+    } else {
+      onClose();
+    }
   };
 
   const getConsonantDisplay = (consonant: string): string => {
@@ -81,7 +110,7 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
 
   return (
     <AnimatePresence>
-      {sessionActive && (
+      {sessionActive && !showingSummary && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -107,12 +136,24 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
                     <p className="text-xs opacity-90">Speech clarity training</p>
                   </div>
                 </div>
-                <button
-                  onClick={handleEndSession}
-                  className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
-                >
-                  <X size={20} />
-                </button>
+                <div className="flex items-center gap-2">
+                  {isSupported && (
+                    <div className="flex items-center gap-2 bg-white/20 px-3 py-2 rounded-lg">
+                      <Mic size={16} />
+                      <Switch
+                        checked={isVoiceMode}
+                        onCheckedChange={setIsVoiceMode}
+                        className="h-6 w-10 bg-white/30 rounded-full relative data-[state=checked]:bg-green-400 transition-colors"
+                      />
+                    </div>
+                  )}
+                  <button
+                    onClick={handleEndSession}
+                    className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -189,18 +230,29 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
                       exit={{ opacity: 0, y: -10 }}
                       className="space-y-3"
                     >
-                      <p className="text-center text-slate-600 text-sm font-medium">Which consonant did you hear?</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {consonantSet.map(consonant => (
-                          <Button
-                            key={consonant}
-                            onClick={() => handleResponse(consonant)}
-                            className="h-14 bg-slate-100 text-slate-700 hover:bg-amber-200 hover:text-amber-700 rounded-lg font-bold text-xl transition-colors"
-                          >
-                            {getConsonantDisplay(consonant)}
-                          </Button>
-                        ))}
-                      </div>
+                      <p className="text-center text-slate-600 text-sm font-medium">
+                        {isVoiceMode ? 'Speak the consonant you heard' : 'Which consonant did you hear?'}
+                      </p>
+                      {isVoiceMode ? (
+                        <VoiceModeButton
+                          isListening={isListening}
+                          error={voiceError}
+                          interimTranscript={interimTranscript}
+                          onTap={startListening}
+                        />
+                      ) : (
+                        <div className="grid grid-cols-3 gap-2">
+                          {consonantSet.map(consonant => (
+                            <Button
+                              key={consonant}
+                              onClick={() => handleResponse(consonant)}
+                              className="h-14 bg-slate-100 text-slate-700 hover:bg-amber-200 hover:text-amber-700 rounded-lg font-bold text-xl transition-colors"
+                            >
+                              {getConsonantDisplay(consonant)}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   )}
 
@@ -261,6 +313,19 @@ export const ConsonantContrastSession: React.FC<ConsonantContrastSessionProps> =
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {showingSummary && (
+        <VoiceFeedbackSummary
+          perPhonemeAccuracy={perPhonemeAccuracy}
+          exerciseType="consonant"
+          sessionDuration={Math.round((Date.now() - sessionStartTime) / 1000)}
+          onClose={() => {
+            setShowingSummary(false);
+            setSessionActive(false);
+            onClose();
+          }}
+        />
       )}
     </AnimatePresence>
   );

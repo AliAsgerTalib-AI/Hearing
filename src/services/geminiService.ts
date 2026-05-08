@@ -231,3 +231,80 @@ function convertRegimenToAuditoryPlan(
     })),
   };
 }
+
+export interface PhonemeAccuracyData {
+  exerciseType: 'vowel' | 'consonant';
+  perPhoneme: Record<string, { correct: number; total: number }>;
+  sessionAccuracy: number;
+  sessionDuration: number;
+}
+
+/**
+ * Generate conversational voice feedback using Gemini API
+ * Returns a 2-3 sentence personalized summary highlighting strengths and areas for improvement
+ */
+export async function generateVoiceFeedback(
+  data: PhonemeAccuracyData
+): Promise<string | null> {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      return null;
+    }
+
+    const phonemeList = Object.entries(data.perPhoneme)
+      .map(
+        ([phoneme, { correct, total }]) =>
+          `/${phoneme}/: ${correct}/${total} correct (${Math.round((correct / total) * 100)}%)`
+      )
+      .join('\n');
+
+    const exerciseName = data.exerciseType === 'vowel' ? 'vowel discrimination' : 'consonant contrast';
+
+    const prompt = `You are a warm, encouraging auditory training coach. A user just completed a voice-based ${exerciseName} exercise session.
+
+PHONEME ACCURACY DATA:
+${phonemeList}
+
+Overall session accuracy: ${data.sessionAccuracy}%
+Session duration: ${data.sessionDuration}s
+
+Provide a short (2-3 sentences) personalized feedback summary. Highlight the phoneme they performed best on and one that needs more work. Use encouraging, conversational language appropriate for a mobile app. Do not use clinical jargon. Be specific about which phonemes and progress patterns you observe.`;
+
+    const response = await ai.models.generateContent({
+      model: getModelName(),
+      contents: prompt,
+      config: {
+        systemInstruction:
+          'You are a warm, encouraging auditory training coach. Provide personalized, motivating feedback that highlights progress and encourages continued practice.',
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            feedback: { type: Type.STRING },
+          },
+          required: ['feedback'],
+        },
+      },
+    });
+
+    const responseText = response.text || '{}';
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.warn('Failed to parse voice feedback response:', parseErr);
+      return null;
+    }
+
+    if (parsed && typeof parsed === 'object' && 'feedback' in parsed && typeof (parsed as Record<string, unknown>).feedback === 'string') {
+      return (parsed as Record<string, unknown>).feedback as string;
+    }
+
+    return null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn('Voice feedback generation failed:', message);
+    return null;
+  }
+}

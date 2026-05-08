@@ -7,6 +7,7 @@ import { AuditoryTraining } from './components/AuditoryTraining';
 import { GamificationPanel } from './components/GamificationPanel';
 import { StorageProvider } from './contexts/StorageContext';
 import { GamificationProvider } from './contexts/GamificationContext';
+import { ScenarioProvider } from './contexts/ScenarioContext';
 import { cn } from './lib/utils';
 
 function AppContent() {
@@ -153,7 +154,9 @@ export default function App() {
   return (
     <StorageProvider>
       <GamificationProvider>
-        <AppContent />
+        <ScenarioProvider>
+          <AppContent />
+        </ScenarioProvider>
       </GamificationProvider>
     </StorageProvider>
   );

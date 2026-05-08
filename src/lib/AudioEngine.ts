@@ -9,6 +9,7 @@ import {
  * Uses Web Audio API to generate precise sine waves.
  */
 export class AudioEngine {
+  private static _instance: AudioEngine | null = null;
   private context: AudioContext | null = null;
   private oscillator: OscillatorNode | null = null;
   private gainNode: GainNode | null = null;
@@ -19,6 +20,19 @@ export class AudioEngine {
 
   constructor() {
     this.init();
+  }
+
+  public static getInstance(): AudioEngine {
+    if (!AudioEngine._instance) {
+      AudioEngine._instance = new AudioEngine();
+    }
+    return AudioEngine._instance;
+  }
+
+  public getContext(): AudioContext {
+    if (!this.context) this.init();
+    if (!this.context) throw new Error('AudioContext unavailable');
+    return this.context;
   }
 
   /**
@@ -211,4 +225,4 @@ export class AudioEngine {
   }
 }
 
-export const audioEngine = new AudioEngine();
+export const audioEngine = AudioEngine.getInstance();
