@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Star, BookOpen, Headphones, Zap, Sparkles, Brain, Loader2 } from 'lucide-react';
+import { Play, Star, BookOpen, Headphones, Zap, Sparkles, Brain, Loader2, RotateCcw, Compass, MapPin } from 'lucide-react';
 import { Card, Button } from './ui/basic';
 import { generateAuditoryPlan, AuditoryPlan, TestResult } from '../services/geminiService';
+import { HighFrequencyPulseSession } from './HighFrequencyPulseSession';
+import { ConsonantContrastSession } from './ConsonantContrastSession';
+import { VowelDiscriminationSession } from './VowelDiscriminationSession';
+import { SpatialLocalizationSession } from './SpatialLocalizationSession';
+import { EnvironmentalSoundscapeSession } from './EnvironmentalSoundscapeSession';
+import { PersonalizedNeuroRegimenDisplay } from './PersonalizedNeuroRegimenDisplay';
+import { StreakWidget } from './StreakWidget';
 
 // Mocking some baseline results for Sarah to show AI personalization
 const MOCK_RESULTS: TestResult[] = [
@@ -44,18 +51,28 @@ const EXERCISES = [
   },
   {
     id: 4,
-    title: "Stereo Localization",
-    duration: "10 min",
-    intensity: "Medium",
-    icon: <Headphones className="text-emerald-500" />,
-    description: "Train your brain to pinpoint sound direction in a virtual 3D space.",
-    unlocked: false
+    title: "Spatial Localization",
+    duration: "6 min",
+    intensity: "High",
+    icon: <Compass className="text-cyan-500" />,
+    description: "Identify where sounds are positioned in 3D space. Activates superior colliculus.",
+    unlocked: true
+  },
+  {
+    id: 5,
+    title: "Environmental Soundscape",
+    duration: "8 min",
+    intensity: "Expert",
+    icon: <MapPin className="text-emerald-500" />,
+    description: "Navigate multiple speakers in realistic 3D environments (Times Square, concert hall, restaurant).",
+    unlocked: true
   }
 ];
 
 export const AuditoryTraining = () => {
   const [aiPlan, setAiPlan] = useState<AuditoryPlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeExercise, setActiveExercise] = useState<number | null>(null);
 
   const getAiRegimen = async () => {
     setIsLoading(true);
@@ -66,9 +83,12 @@ export const AuditoryTraining = () => {
 
   return (
     <div className="space-y-8 p-6 pb-24">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-serif">Daily Exercises</h1>
-        <p className="text-accent-sage italic font-serif">Neuroplasticity requires consistent stimulation.</p>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-serif">Daily Exercises</h1>
+          <p className="text-accent-sage italic font-serif">Neuroplasticity requires consistent stimulation.</p>
+        </div>
+        <StreakWidget />
       </div>
 
       {/* AI Synapse Trainer */}
@@ -90,8 +110,8 @@ export const AuditoryTraining = () => {
             <p className="text-sm text-slate-300 leading-relaxed">
               Analyze your last clinical assessment to generate a custom training path targeting your specific hearing profile.
             </p>
-            <Button 
-              onClick={getAiRegimen} 
+            <Button
+              onClick={getAiRegimen}
               disabled={isLoading}
               className="w-full h-12 bg-white text-primary hover:bg-slate-100 flex items-center justify-center gap-2"
             >
@@ -100,31 +120,44 @@ export const AuditoryTraining = () => {
             </Button>
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4 relative z-10"
+            className="space-y-3 relative z-10"
           >
-            <div className="p-3 bg-white/5 rounded-xl border border-white/10">
-              <span className="text-[10px] font-bold uppercase text-accent-teal mb-1 block">AI Insight</span>
+            {/* Compact preview for regimen display */}
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10 space-y-2">
+              <span className="text-[10px] font-bold uppercase text-accent-teal mb-1 block">AI Personalized Regimen</span>
               <p className="text-xs italic text-slate-300">"{aiPlan.insight}"</p>
-            </div>
-            
-            <div className="space-y-3">
-               {aiPlan.exercises.slice(0, 2).map((ex, i) => (
-                 <div key={i} className="flex gap-3 items-start">
-                   <div className="p-1 px-2 rounded bg-accent-teal/20 text-[10px] font-bold h-fit mt-0.5">0{i+1}</div>
-                   <div>
-                     <h4 className="text-sm font-medium">{ex.title}</h4>
-                     <p className="text-[11px] text-slate-400">{ex.durationMinutes}m • {ex.description}</p>
-                   </div>
-                 </div>
-               ))}
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {aiPlan.exercises.map((ex, i) => (
+                  <div key={i} className="p-2 bg-white/10 rounded text-center">
+                    <p className="text-[10px] font-semibold text-accent-teal">{ex.title.split(' ')[0]}</p>
+                    <p className="text-[9px] text-slate-400">{ex.durationMinutes}m</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <Button onClick={() => setAiPlan(null)} variant="ghost" className="w-full text-[10px] uppercase tracking-widest text-slate-400 hover:text-white">
-              Reset AI Plan
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setAiPlan(null)}
+                variant="ghost"
+                className="flex-1 text-[10px] uppercase tracking-widest text-slate-400 hover:text-white flex items-center justify-center gap-1"
+              >
+                <RotateCcw size={12} />
+                Generate New
+              </Button>
+              <Button
+                onClick={() => {
+                  // Show full regimen display (could expand to separate modal)
+                  console.log('View full regimen');
+                }}
+                className="flex-1 text-[10px] uppercase tracking-widest bg-accent-teal text-primary hover:bg-accent-teal/80"
+              >
+                View Details
+              </Button>
+            </div>
           </motion.div>
         )}
       </Card>
@@ -153,15 +186,16 @@ export const AuditoryTraining = () => {
                 </div>
                 {!ex.unlocked && <div className="text-[10px] bg-slate-100 text-slate-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Locked</div>}
               </div>
-              
+
               <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 {ex.description}
               </p>
 
               <div className="flex justify-end pt-2">
-                <Button 
-                  variant={ex.unlocked ? 'primary' : 'secondary'} 
+                <Button
+                  variant={ex.unlocked ? 'primary' : 'secondary'}
                   disabled={!ex.unlocked}
+                  onClick={() => ex.unlocked && setActiveExercise(ex.id)}
                   className="h-10 px-6 text-sm"
                 >
                   {ex.unlocked ? 'Start Session' : 'Level 5 Required'}
@@ -171,6 +205,23 @@ export const AuditoryTraining = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Exercise Sessions */}
+      {activeExercise === 1 && (
+        <VowelDiscriminationSession onClose={() => setActiveExercise(null)} />
+      )}
+      {activeExercise === 2 && (
+        <ConsonantContrastSession onClose={() => setActiveExercise(null)} />
+      )}
+      {activeExercise === 3 && (
+        <HighFrequencyPulseSession onClose={() => setActiveExercise(null)} />
+      )}
+      {activeExercise === 4 && (
+        <SpatialLocalizationSession onClose={() => setActiveExercise(null)} />
+      )}
+      {activeExercise === 5 && (
+        <EnvironmentalSoundscapeSession onClose={() => setActiveExercise(null)} />
+      )}
     </div>
   );
 };

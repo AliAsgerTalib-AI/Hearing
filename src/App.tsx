@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Home, Activity, Headphones, Mic2 } from 'lucide-react';
+import { Home, Activity, Headphones, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { HomeView } from './components/HomeView';
 import { HearingTest } from './components/HearingTest';
 import { AuditoryTraining } from './components/AuditoryTraining';
-import { EnvironmentalAnalyzer } from './components/EnvironmentalAnalyzer';
+import { GamificationPanel } from './components/GamificationPanel';
 import { StorageProvider } from './contexts/StorageContext';
+import { GamificationProvider } from './contexts/GamificationContext';
 import { cn } from './lib/utils';
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<'home' | 'test' | 'training' | 'live'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'test' | 'training' | 'achievements'>('home');
   const [isTestMode, setIsTestMode] = useState(false);
 
   // If in test mode, we show the full screen test
@@ -51,11 +52,11 @@ function AppContent() {
               ariaLabel="Navigate to auditory training exercises"
             />
             <NavButton
-              active={activeTab === 'live'}
-              onClick={() => setActiveTab('live')}
-              icon={<Mic2 size={22} />}
-              label="Live"
-              ariaLabel="Navigate to real-time acoustic insights"
+              active={activeTab === 'achievements'}
+              onClick={() => setActiveTab('achievements')}
+              icon={<Trophy size={22} />}
+              label="Stats"
+              ariaLabel="Navigate to achievements and training statistics"
             />
             <NavButton
               active={activeTab === 'test'}
@@ -92,15 +93,14 @@ function AppContent() {
               </motion.div>
             )}
 
-            {activeTab === 'live' && (
+            {activeTab === 'achievements' && (
               <motion.div
-                key="live"
+                key="achievements"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="p-6 h-full"
               >
-                <EnvironmentalAnalyzer />
+                <GamificationPanel />
               </motion.div>
             )}
 
@@ -152,7 +152,9 @@ function AppContent() {
 export default function App() {
   return (
     <StorageProvider>
-      <AppContent />
+      <GamificationProvider>
+        <AppContent />
+      </GamificationProvider>
     </StorageProvider>
   );
 }
