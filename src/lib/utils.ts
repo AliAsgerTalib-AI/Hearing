@@ -59,5 +59,5 @@ export function calculateThresholds(results: ThresholdResult[]): { avgLeft: numb
 }
 
 export function enforceHistoryLimit<T>(items: T[], max: number): T[] {
-  return items.slice(-max);
+  return items.slice(0, max);
 }

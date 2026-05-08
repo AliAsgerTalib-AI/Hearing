@@ -1,44 +1,33 @@
 import React from 'react';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
   ReferenceArea,
   Dot
 } from 'recharts';
-
-interface TestResult {
-  side: 'left' | 'right' | 'both';
-  freq: number;
-  db: number;
-}
+import { HEARING_LOSS_CATEGORIES } from '../lib/constants';
+import { TestResult } from '../types/index';
 
 interface AudiogramChartProps {
   results: TestResult[];
+  referenceData?: Array<{ freq: number; freqLabel: string; isoRef: number }>;
 }
 
-const CATEGORIES = [
-  { label: 'Normal', min: -10, max: 20, color: '#f0fdfa' },
-  { label: 'Mild', min: 20, max: 40, color: '#fffbeb' },
-  { label: 'Moderate', min: 40, max: 60, color: '#fff7ed' },
-  { label: 'Severe', min: 60, max: 80, color: '#fef2f2' },
-  { label: 'Profound', min: 80, max: 100, color: '#450a0a05' },
-];
-
-export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
+export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results, referenceData }) => {
   // Sort frequencies for the line chart to connect correctly
   const freqSet = new Set(results.map(r => r.freq));
   const sortedFrequencies: number[] = Array.from(freqSet).sort((a, b) => (a as number) - (b as number)) as number[];
-  
-  const chartData = sortedFrequencies.map((freq) => {
+
+  let chartData = sortedFrequencies.map((freq) => {
     const leftRes = results.find(r => r.freq === freq && r.side === 'left');
     const rightRes = results.find(r => r.freq === freq && r.side === 'right');
     const bothRes = results.find(r => r.freq === freq && r.side === 'both');
-    
+
     return {
       freq,
       freqLabel: freq >= 1000 ? `${(freq as number) / 1000}k` : freq.toString(),
@@ -47,6 +36,14 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
       both: bothRes?.db,
     };
   });
+
+  // Merge reference data if provided
+  if (referenceData && referenceData.length > 0) {
+    chartData = chartData.map((dataPoint) => {
+      const refPoint = referenceData.find(r => r.freq === dataPoint.freq);
+      return { ...dataPoint, isoRef: refPoint?.isoRef };
+    });
+  }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -80,6 +77,12 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
           <div className="w-3 h-0.5 bg-teal-500 rounded-full border-b border-dashed" />
           <span className="font-medium">Both Ears</span>
         </div>
+        {referenceData && (
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-0.5 bg-slate-400 rounded-full border-b border-dashed" />
+            <span className="font-medium">Age/Sex Reference</span>
+          </div>
+        )}
       </div>
 
       {/* Chart Container */}
@@ -92,14 +95,14 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
           
           {/* Background Zones */}
-          {CATEGORIES.map((cat, i) => {
+          {Object.values(HEARING_LOSS_CATEGORIES).map((cat, i) => {
             const RefArea = ReferenceArea as any;
             return (
-              <RefArea 
+              <RefArea
                 key={`cat-${i}`}
-                y1={cat.min} 
-                y2={cat.max} 
-                fill={cat.color} 
+                y1={cat.min}
+                y2={cat.max}
+                fill={cat.color}
                 fillOpacity={1}
                 stroke="none"
               />
@@ -148,17 +151,30 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
             connectNulls
           />
 
-          <Line 
-            name="Both Ears" 
-            type="monotone" 
-            dataKey="both" 
-            stroke="#0d9488" 
+          <Line
+            name="Both Ears"
+            type="monotone"
+            dataKey="both"
+            stroke="#0d9488"
             strokeWidth={2}
             strokeDasharray="5 5"
             dot={{ r: 4, stroke: '#0d9488', strokeWidth: 2, fill: '#fff' }}
             activeDot={{ r: 6 }}
             connectNulls
           />
+
+          {referenceData && (
+            <Line
+              name="Age/Sex Reference (ISO 7029)"
+              type="monotone"
+              dataKey="isoRef"
+              stroke="#94a3b8"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              dot={false}
+              connectNulls
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
       </div>

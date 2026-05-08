@@ -6,7 +6,8 @@ import { NoiseCheck } from './NoiseCheck';
 import { SafetyScreen } from './SafetyScreen';
 import { DemographicsScreen } from './DemographicsScreen';
 import { ScreeningResponse } from '../types/contraindications';
-import { DeviceCalibration, DeviceType } from './DeviceCalibration';
+import { DeviceCalibration } from './DeviceCalibration';
+import { HearingHistoryEntry, TestResult, Demographics, DeviceType } from '../types/index';
 import { audioEngine } from '../lib/AudioEngine';
 import { TestingPhase } from './TestingPhase';
 import { ResultsDisplay } from './ResultsDisplay';
@@ -34,27 +35,6 @@ const FREQUENCIES = TEST_CONFIG.FREQUENCIES;
 const SIDES = TEST_CONFIG.SIDES;
 const MAX_DB = TEST_CONFIG.MAX_DB;
 const MIN_DB = TEST_CONFIG.MIN_DB;
-
-interface TestResult {
-  side: 'left' | 'right' | 'both';
-  freq: number;
-  db: number;
-}
-
-export interface HearingHistoryEntry {
-  id: string;
-  date: string;
-  demographics: Demographics | null;
-  device: DeviceType | null;
-  results: TestResult[];
-  avgLeft: number;
-  avgRight: number;
-}
-
-interface Demographics {
-  age: number;
-  sex: 'male' | 'female' | 'other';
-}
 
 export const HearingTest = () => {
   const [step, setStep] = useState<'intro' | 'safety' | 'demographics' | 'noise' | 'calibration' | 'side-prep' | 'testing' | 'results'>('intro');
@@ -150,8 +130,10 @@ export const HearingTest = () => {
   const saveSession = (currentResults: TestResult[]) => {
     const { avgLeft, avgRight } = calculateThresholds(currentResults);
 
+    const now = Date.now();
     const newEntry: HearingHistoryEntry = {
-      id: Date.now().toString(),
+      id: now.toString(),
+      timestamp: now,
       date: new Date().toLocaleString(),
       demographics,
       device: selectedDevice,

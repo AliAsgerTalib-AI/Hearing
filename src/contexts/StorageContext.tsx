@@ -1,11 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { HearingHistoryEntry } from '../components/HearingTest';
-
-interface TestResult {
-  side: 'left' | 'right' | 'both';
-  freq: number;
-  db: number;
-}
+import { HearingHistoryEntry, TestResult } from '../types/index';
 
 interface StorageContextType {
   history: HearingHistoryEntry[];

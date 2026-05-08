@@ -32,6 +32,7 @@ export type DeviceType = 'earbuds' | 'iem' | 'headphones' | 'speakers';
 
 export interface HearingHistoryEntry {
   id: string;
+  timestamp: number;
   date: string;
   demographics: Demographics | null;
   device: DeviceType | null;
