@@ -25,7 +25,6 @@
     "motion": "^12.38.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
-    "react-router-dom": "^7.15.0",
     "recharts": "^3.8.1",
     "shadcn-ui": "^0.9.5",
     "tailwind-merge": "^3.5.0",

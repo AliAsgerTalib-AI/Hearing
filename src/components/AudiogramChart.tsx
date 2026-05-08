@@ -65,7 +65,25 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
   };
 
   return (
-    <div className="w-full h-[320px] font-sans">
+    <div className="space-y-3">
+      {/* Chart Legend */}
+      <div className="flex flex-wrap gap-4 px-4 text-xs">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-blue-500 rounded-full" />
+          <span className="font-medium">Left Ear (X)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-red-500 rounded-full" />
+          <span className="font-medium">Right Ear (O)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-0.5 bg-teal-500 rounded-full border-b border-dashed" />
+          <span className="font-medium">Both Ears</span>
+        </div>
+      </div>
+
+      {/* Chart Container */}
+      <div className="w-full h-[320px] font-sans">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
@@ -143,6 +161,7 @@ export const AudiogramChart: React.FC<AudiogramChartProps> = ({ results }) => {
           />
         </LineChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 };

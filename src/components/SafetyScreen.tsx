@@ -8,7 +8,7 @@ interface SafetyScreenProps {
   onCancel: () => void;
 }
 
-export const SafetyScreen = ({ onAccept, onCancel }: SafetyScreenProps) => {
+const SafetyScreenComponent = ({ onAccept, onCancel }: SafetyScreenProps) => {
   const contraindications = [
     "Sudden hearing loss in the last 90 days",
     "Ear pain, active discharge, or inflammation",
@@ -58,3 +58,5 @@ export const SafetyScreen = ({ onAccept, onCancel }: SafetyScreenProps) => {
     </motion.div>
   );
 };
+
+export const SafetyScreen = React.memo(SafetyScreenComponent);

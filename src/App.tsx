@@ -5,9 +5,10 @@ import { HomeView } from './components/HomeView';
 import { HearingTest } from './components/HearingTest';
 import { AuditoryTraining } from './components/AuditoryTraining';
 import { EnvironmentalAnalyzer } from './components/EnvironmentalAnalyzer';
+import { StorageProvider } from './contexts/StorageContext';
 import { cn } from './lib/utils';
 
-export default function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<'home' | 'test' | 'training' | 'live'>('home');
   const [isTestMode, setIsTestMode] = useState(false);
 
@@ -35,29 +36,33 @@ export default function App() {
         {/* Top Navigation / Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 p-3 pt-4">
           <div className="flex justify-between items-center bg-slate-100/50 rounded-2xl p-1">
-            <NavButton 
-              active={activeTab === 'home'} 
+            <NavButton
+              active={activeTab === 'home'}
               onClick={() => setActiveTab('home')}
               icon={<Home size={22} />}
               label="Home"
+              ariaLabel="Navigate to home screen"
             />
-            <NavButton 
-              active={activeTab === 'training'} 
+            <NavButton
+              active={activeTab === 'training'}
               onClick={() => setActiveTab('training')}
               icon={<Headphones size={22} />}
               label="Train"
+              ariaLabel="Navigate to auditory training exercises"
             />
-            <NavButton 
-              active={activeTab === 'live'} 
+            <NavButton
+              active={activeTab === 'live'}
               onClick={() => setActiveTab('live')}
               icon={<Mic2 size={22} />}
               label="Live"
+              ariaLabel="Navigate to real-time acoustic insights"
             />
-            <NavButton 
-              active={activeTab === 'test'} 
+            <NavButton
+              active={activeTab === 'test'}
               onClick={() => setActiveTab('test')}
               icon={<Activity size={22} />}
               label="Check"
+              ariaLabel="Navigate to hearing assessment"
             />
           </div>
         </header>
@@ -144,10 +149,19 @@ export default function App() {
   );
 }
 
-function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+export default function App() {
   return (
-    <button 
+    <StorageProvider>
+      <AppContent />
+    </StorageProvider>
+  );
+}
+
+function NavButton({ active, onClick, icon, label, ariaLabel }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, ariaLabel: string }) {
+  return (
+    <button
       onClick={onClick}
+      aria-label={ariaLabel}
       className={cn(
         "flex flex-col items-center justify-center flex-1 h-12 transition-all relative overflow-hidden",
         active ? "text-primary" : "text-accent-sage hover:text-slate-500"

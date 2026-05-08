@@ -2,35 +2,23 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Mic, MicOff, AlertCircle, Info, Activity } from 'lucide-react';
 import { Card, Button } from './ui/basic';
-
-interface TestResult {
-  side: 'left' | 'right' | 'both';
-  freq: number;
-  db: number;
-}
+import { useStorage } from '../contexts/StorageContext';
+import { useDebouncedState } from '../hooks/useDebounce';
+import { useCanvasResize, useCanvasDimensions } from '../hooks/useCanvasResize';
 
 export const EnvironmentalAnalyzer = () => {
+  const { testResults } = useStorage();
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<TestResult[]>([]);
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const isDrawingRef = useRef(false);
 
   useEffect(() => {
-    // Load existing results
-    const stored = localStorage.getItem('hearingTestResults');
-    if (stored) {
-      try {
-        setResults(JSON.parse(stored));
-      } catch (e) {
-        console.error("Failed to parse results", e);
-      }
-    }
-
     return () => {
       stopAnalysis();
     };
@@ -61,48 +49,61 @@ export const EnvironmentalAnalyzer = () => {
   };
 
   const stopAnalysis = () => {
+    isDrawingRef.current = false;
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
     }
     if (audioContextRef.current) {
       audioContextRef.current.close();
+      audioContextRef.current = null;
     }
     setIsActive(false);
   };
 
   const [peakFreq, setPeakFreq] = useState(0);
   const [peakDb, setPeakDb] = useState(-100);
+  const [, setCanvasResized] = useState(0); // Trigger re-render on canvas resize
+
+  // Debounce peak frequency and dB updates to avoid excessive React reconciliation
+  // Only update state max every 100ms even if values change every frame (60fps)
+  const debouncedSetPeakFreq = useDebouncedState(setPeakFreq, 100);
+  const debouncedSetPeakDb = useDebouncedState(setPeakDb, 100);
+
+  // Use ResizeObserver for efficient canvas resize handling (instead of checking every frame)
+  // This hook only triggers when the canvas element actually resizes
+  useCanvasResize(canvasRef, () => {
+    setCanvasResized(prev => prev + 1);
+  });
+
+  // Get current canvas dimensions (updated when resize happens)
+  const canvasDims = useCanvasDimensions(canvasRef);
 
   const draw = () => {
-    if (!canvasRef.current || !analyserRef.current) return;
-    
+    if (!canvasRef.current || !analyserRef.current || isDrawingRef.current) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
+
     const analyser = analyserRef.current;
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Float32Array(bufferLength);
-    
+
+    isDrawingRef.current = true;
     const renderFrame = () => {
+      if (!isDrawingRef.current) return;
       animationFrameRef.current = requestAnimationFrame(renderFrame);
       analyser.getFloatFrequencyData(dataArray);
-      
-      // Handle High DPI displays and Resizing reactively
-      const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
-      const logicalWidth = rect.width;
-      const logicalHeight = rect.height;
 
-      if (canvas.width !== logicalWidth * dpr || canvas.height !== logicalHeight * dpr) {
-        canvas.width = logicalWidth * dpr;
-        canvas.height = logicalHeight * dpr;
-        ctx.scale(dpr, dpr);
-      }
-      
+      // Get current canvas dimensions (ResizeObserver handles updates)
+      const logicalWidth = canvasDims.logicalWidth;
+      const logicalHeight = canvasDims.logicalHeight;
+
       ctx.clearRect(0, 0, logicalWidth, logicalHeight);
 
       // UI Config
@@ -175,16 +176,16 @@ export const EnvironmentalAnalyzer = () => {
       }
       ctx.stroke();
 
-      // Update peak state infrequently to avoid React thrashing
+      // Update peak state with debouncing to avoid excessive React reconciliation
+      // Instead of random polling (~5% of frames = ~3 updates/sec at 60fps),
+      // use timer-based debouncing (max once per 100ms = 10 updates/sec max)
       const currentPeakFreq = Math.round((maxFreqIdx * sampleRate) / (bufferLength * 2));
-      if (Math.random() > 0.95) { 
-        setPeakFreq(currentPeakFreq);
-        setPeakDb(Math.round(maxVal));
-      }
+      debouncedSetPeakFreq(currentPeakFreq);
+      debouncedSetPeakDb(Math.round(maxVal));
 
       // Overlay Hearing Loss Mask
-      if (results.length > 0) {
-        const combinedResults = results.reduce((acc, current) => {
+      if (testResults.length > 0) {
+        const combinedResults = testResults.reduce((acc, current) => {
           if (!acc[current.freq] || current.side === 'both') {
             acc[current.freq] = current.db;
           } else {

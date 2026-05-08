@@ -1,29 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { Activity, Mic2, History, Trash2, ChevronRight, Calendar } from 'lucide-react';
 import { Card, Button } from './ui/basic';
 import { Progress } from './ui/progress';
-import { HearingHistoryEntry } from './HearingTest';
+import { useStorage } from '../contexts/StorageContext';
 
 export const HomeView = ({ onStartTest }: { onStartTest: () => void }) => {
-  const [history, setHistory] = useState<HearingHistoryEntry[]>([]);
+  const { history, clearAll } = useStorage();
 
-  useEffect(() => {
-    const raw = localStorage.getItem('hearingTestHistory');
-    if (raw) {
-      try {
-        setHistory(JSON.parse(raw));
-      } catch (e) {
-        console.error("Failed to parse history", e);
-      }
-    }
-  }, []);
-
-  const clearHistory = () => {
+  const handleClearHistory = () => {
     if (window.confirm("Are you sure you want to delete all test history? This cannot be undone.")) {
-      localStorage.removeItem('hearingTestHistory');
-      localStorage.removeItem('hearingTestResults');
-      setHistory([]);
+      clearAll();
     }
   };
 
@@ -71,8 +58,8 @@ export const HomeView = ({ onStartTest }: { onStartTest: () => void }) => {
             <History size={20} className="text-accent-teal" /> Recent Activity
           </h4>
           {history.length > 0 && (
-            <button 
-              onClick={clearHistory}
+            <button
+              onClick={handleClearHistory}
               className="text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-500 flex items-center gap-1 transition-colors"
             >
               <Trash2 size={12} /> Clear All

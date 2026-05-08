@@ -1,3 +1,9 @@
+import {
+  DEVICE_CALIBRATION_FACTORS,
+  NOISE_CANCELLATION,
+  AUDIO_PLAYBACK
+} from './constants';
+
 /**
  * AudioEngine utility for pure-tone audiometry.
  * Uses Web Audio API to generate precise sine waves.
@@ -18,16 +24,28 @@ export class AudioEngine {
    * Adjusts the gain based on device type for better approximation.
    */
   public setDeviceCalibration(device: 'earbuds' | 'iem' | 'headphones' | 'speakers', noiseCancelling: boolean) {
-    let factor = 1.0;
-    switch (device) {
-      case 'earbuds': factor = 0.75; break; // Direct coupled, standard seal
-      case 'iem': factor = 0.6; break; // Professional seal, highly efficient
-      case 'headphones': factor = 1.0; break; // Baseline
-      case 'speakers': factor = 2.5; break; 
-    }
+    let factor = (() => {
+      switch (device) {
+        case 'earbuds':
+          return DEVICE_CALIBRATION_FACTORS.EARBUDS;
+        case 'iem':
+          return DEVICE_CALIBRATION_FACTORS.IEM;
+        case 'headphones':
+          return DEVICE_CALIBRATION_FACTORS.HEADPHONES;
+        case 'speakers':
+          return DEVICE_CALIBRATION_FACTORS.SPEAKERS;
+        default:
+          return DEVICE_CALIBRATION_FACTORS.HEADPHONES;
+      }
+    })();
+
     // Noise cancelling can lower perceived floor, impacting threshold testing
-    if (noiseCancelling) factor *= 0.9;
-    
+    if (noiseCancelling) {
+      factor *= NOISE_CANCELLATION.ACTIVE_FACTOR;
+    } else {
+      factor *= NOISE_CANCELLATION.INACTIVE_FACTOR;
+    }
+
     this.calibrationFactor = factor;
   }
 
@@ -47,7 +65,7 @@ export class AudioEngine {
   }
 
   /**
-   * Plays a pulsed pure tone (two short beeps) to help the brain distinguish 
+   * Plays a pulsed pure tone (two short beeps) to help the brain distinguish
    * the signal from background hiss or noise floor.
    */
   public async playPulsedTone(frequency: number, gain: number, pan: number = 0) {
@@ -55,19 +73,19 @@ export class AudioEngine {
     if (!this.context) this.init();
     if (!this.context) return;
 
-    // Prevent digital clipping by clamping the gain to 0.95 (safety ceiling)
-    const calibratedGain = Math.min(gain * this.calibrationFactor, 0.95);
+    // Prevent digital clipping by clamping the gain to safety ceiling
+    const calibratedGain = Math.min(gain * this.calibrationFactor, AUDIO_PLAYBACK.GAIN_SAFETY_CEILING);
     const now = this.context.currentTime;
 
     // First Pulse
-    this.createTonePulse(frequency, calibratedGain, now, 0.4, pan);
+    this.createTonePulse(frequency, calibratedGain, now, AUDIO_PLAYBACK.PULSE_DURATION, pan);
     // Second Pulse
-    this.createTonePulse(frequency, calibratedGain, now + 0.6, 0.4, pan);
+    this.createTonePulse(frequency, calibratedGain, now + AUDIO_PLAYBACK.PULSE_INTERVAL, AUDIO_PLAYBACK.PULSE_DURATION, pan);
   }
 
   private createTonePulse(freq: number, gain: number, startTime: number, duration: number, pan: number = 0) {
     if (!this.context) return;
-    
+
     const osc = this.context.createOscillator();
     const g = this.context.createGain();
     const panner = this.context.createStereoPanner();
@@ -78,10 +96,13 @@ export class AudioEngine {
 
     // Use exponential ramping for smoother onset/offset (avoids transients/scratching)
     // Gain starts at a non-zero minimum for exponential math
-    g.gain.setValueAtTime(0.0001, startTime);
-    g.gain.exponentialRampToValueAtTime(Math.max(gain, 0.0001), startTime + 0.06);
-    g.gain.exponentialRampToValueAtTime(Math.max(gain, 0.0001), startTime + duration - 0.06);
-    g.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    const minGain = AUDIO_PLAYBACK.MIN_EXPONENTIAL_GAIN;
+    const rampDuration = AUDIO_PLAYBACK.ENVELOPE_RAMP_DURATION;
+
+    g.gain.setValueAtTime(minGain, startTime);
+    g.gain.exponentialRampToValueAtTime(Math.max(gain, minGain), startTime + rampDuration);
+    g.gain.exponentialRampToValueAtTime(Math.max(gain, minGain), startTime + duration - rampDuration);
+    g.gain.exponentialRampToValueAtTime(minGain, startTime + duration);
 
     osc.connect(g);
     g.connect(panner);
@@ -103,8 +124,8 @@ export class AudioEngine {
     if (!this.context) this.init();
     if (!this.context) return;
 
-    const calibratedGain = Math.min(gain * this.calibrationFactor, 0.95);
-    
+    const calibratedGain = Math.min(gain * this.calibrationFactor, AUDIO_PLAYBACK.GAIN_SAFETY_CEILING);
+
     this.oscillator = this.context.createOscillator();
     this.gainNode = this.context.createGain();
     this.pannerNode = this.context.createStereoPanner();
@@ -113,9 +134,15 @@ export class AudioEngine {
     this.oscillator.frequency.setValueAtTime(frequency, this.context.currentTime);
     this.pannerNode.pan.setValueAtTime(pan, this.context.currentTime);
 
-    // Initial gain 0.0001 to avoid exponential math errors/clicking
-    this.gainNode.gain.setValueAtTime(0.0001, this.context.currentTime);
-    this.gainNode.gain.exponentialRampToValueAtTime(Math.max(calibratedGain, 0.0001), this.context.currentTime + 0.06);
+    // Initial gain set to minimum to avoid exponential math errors/clicking
+    const minGain = AUDIO_PLAYBACK.MIN_EXPONENTIAL_GAIN;
+    const rampDuration = AUDIO_PLAYBACK.ENVELOPE_RAMP_DURATION;
+
+    this.gainNode.gain.setValueAtTime(minGain, this.context.currentTime);
+    this.gainNode.gain.exponentialRampToValueAtTime(
+      Math.max(calibratedGain, minGain),
+      this.context.currentTime + rampDuration
+    );
 
     this.oscillator.connect(this.gainNode);
     this.gainNode.connect(this.pannerNode);
@@ -129,10 +156,10 @@ export class AudioEngine {
    */
   public stopTone() {
     if (this.oscillator && this.gainNode && this.context) {
-      const stopTime = this.context.currentTime + 0.1;
-      this.gainNode.gain.exponentialRampToValueAtTime(0.0001, stopTime);
+      const stopTime = this.context.currentTime + AUDIO_PLAYBACK.ENVELOPE_RAMP_DURATION;
+      this.gainNode.gain.exponentialRampToValueAtTime(AUDIO_PLAYBACK.MIN_EXPONENTIAL_GAIN, stopTime);
       this.oscillator.stop(stopTime);
-      
+
       this.oscillator = null;
       this.gainNode = null;
       this.pannerNode = null;

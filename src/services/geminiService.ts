@@ -1,17 +1,51 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+const getApiKey = (): string => {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) {
+    console.warn("VITE_GEMINI_API_KEY not configured. AI training plan generation will be unavailable.");
+    return '';
+  }
+  return key;
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
+
+export interface Exercise {
+  title: string;
+  description: string;
+  science: string;
+  durationMinutes: number;
+  frequencyHz?: number;
+}
 
 export interface AuditoryPlan {
   dailyFocus: string;
-  exercises: {
-    title: string;
-    description: string;
-    science: string;
-    durationMinutes: number;
-    frequencyHz?: number;
-  }[];
+  exercises: Exercise[];
   insight: string;
+}
+
+function isValidExercise(item: unknown): item is Exercise {
+  if (!item || typeof item !== 'object') return false;
+  const ex = item as Record<string, unknown>;
+  return (
+    typeof ex.title === 'string' &&
+    typeof ex.description === 'string' &&
+    typeof ex.science === 'string' &&
+    typeof ex.durationMinutes === 'number' &&
+    (ex.frequencyHz === undefined || typeof ex.frequencyHz === 'number')
+  );
+}
+
+function isValidAuditoryPlan(data: unknown): data is AuditoryPlan {
+  if (!data || typeof data !== 'object') return false;
+  const plan = data as Record<string, unknown>;
+  return (
+    typeof plan.dailyFocus === 'string' &&
+    Array.isArray(plan.exercises) &&
+    plan.exercises.every(isValidExercise) &&
+    typeof plan.insight === 'string'
+  );
 }
 
 export interface TestResult {
@@ -45,6 +79,12 @@ export async function generateAuditoryPlan(results: TestResult[], demographics?:
   `;
 
   try {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      console.error("Gemini API key not configured. Cannot generate auditory plan.");
+      return null;
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -76,9 +116,22 @@ export async function generateAuditoryPlan(results: TestResult[], demographics?:
       }
     });
 
-    return JSON.parse(response.text || '{}') as AuditoryPlan;
+    const responseText = response.text || '{}';
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(responseText);
+    } catch (parseErr) {
+      throw new Error("Invalid JSON response from Gemini API");
+    }
+
+    if (!isValidAuditoryPlan(parsed)) {
+      throw new Error("Response from Gemini API does not match expected structure");
+    }
+
+    return parsed;
   } catch (error) {
-    console.error("Gemini AI integration error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Gemini AI integration error:", message);
     return null;
   }
 }

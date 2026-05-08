@@ -76,12 +76,19 @@ export const DeviceCalibration = ({ onSelect }: DeviceCalibrationProps) => {
       )}
 
       <div className="flex flex-col gap-3">
-        <Button 
-          disabled={!selected} 
+        <Button
+          disabled={!selected}
           onClick={() => onSelect(selected!, nc)}
           className="w-full"
         >
           Confirm Settings
+        </Button>
+        <Button
+          onClick={() => onSelect('headphones', false)}
+          variant="secondary"
+          className="w-full"
+        >
+          Skip & Use Defaults
         </Button>
       </div>
     </motion.div>

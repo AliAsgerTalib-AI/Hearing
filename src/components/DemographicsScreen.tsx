@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { User, Users, Calendar } from 'lucide-react';
+import { User, Users, Calendar, AlertCircle } from 'lucide-react';
 import { Card, Button } from './ui/basic';
+
+const MIN_AGE = 0;
+const MAX_AGE = 120;
 
 interface DemographicsData {
   age: number;
@@ -12,9 +15,18 @@ interface DemographicsScreenProps {
   onComplete: (data: DemographicsData) => void;
 }
 
-export const DemographicsScreen = ({ onComplete }: DemographicsScreenProps) => {
+const DemographicsScreenComponent = ({ onComplete }: DemographicsScreenProps) => {
   const [age, setAge] = useState<string>('30');
   const [sex, setSex] = useState<'male' | 'female' | 'other'>('female');
+
+  const ageValidation = useMemo(() => {
+    if (!age) return { valid: false, error: 'Age is required' };
+    const ageNum = parseInt(age, 10);
+    if (isNaN(ageNum)) return { valid: false, error: 'Age must be a number' };
+    if (ageNum < MIN_AGE) return { valid: false, error: `Age must be at least ${MIN_AGE}` };
+    if (ageNum > MAX_AGE) return { valid: false, error: `Age cannot exceed ${MAX_AGE}` };
+    return { valid: true, error: null };
+  }, [age]);
 
   return (
     <motion.div 
@@ -32,30 +44,46 @@ export const DemographicsScreen = ({ onComplete }: DemographicsScreenProps) => {
 
       <Card className="space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
+          <label htmlFor="age-input" className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
             <Calendar size={14} /> Biological Age
           </label>
-          <input 
-            type="number" 
+          <input
+            id="age-input"
+            type="number"
             value={age}
             onChange={(e) => setAge(e.target.value)}
-            className="w-full h-14 bg-slate-50 rounded-2xl px-6 text-xl font-serif focus:outline-none focus:ring-2 focus:ring-accent-teal/20"
+            min={MIN_AGE}
+            max={MAX_AGE}
+            className={`w-full h-14 bg-slate-50 rounded-2xl px-6 text-xl font-serif focus:outline-none focus:ring-2 transition-colors ${
+              ageValidation.valid
+                ? 'focus:ring-accent-teal/20'
+                : 'focus:ring-red-200 border-2 border-red-200'
+            }`}
             placeholder="Years"
+            aria-describedby={!ageValidation.valid ? "age-error" : undefined}
           />
+          {!ageValidation.valid && (
+            <div id="age-error" className="flex items-center gap-2 text-red-600 text-xs font-medium" role="alert">
+              <AlertCircle size={14} />
+              {ageValidation.error}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
+        <fieldset className="space-y-2">
+          <legend className="text-xs font-bold uppercase tracking-widest text-accent-sage flex items-center gap-2">
             <Users size={14} /> Biological Sex
-          </label>
+          </legend>
           <div className="grid grid-cols-3 gap-2">
             {(['male', 'female', 'other'] as const).map((s) => (
               <button
                 key={s}
                 onClick={() => setSex(s)}
+                aria-label={`Select ${s}`}
+                aria-pressed={sex === s}
                 className={`h-12 rounded-xl border-2 transition-all capitalize text-sm font-medium ${
-                  sex === s 
-                    ? 'border-accent-teal bg-teal-50 text-accent-teal' 
+                  sex === s
+                    ? 'border-accent-teal bg-teal-50 text-accent-teal'
                     : 'border-slate-100 text-slate-400 hover:border-slate-200'
                 }`}
               >
@@ -63,13 +91,13 @@ export const DemographicsScreen = ({ onComplete }: DemographicsScreenProps) => {
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
       </Card>
 
       <div className="flex flex-col gap-3">
-        <Button 
-          disabled={!age || parseInt(age) <= 0}
-          onClick={() => onComplete({ age: parseInt(age), sex })} 
+        <Button
+          disabled={!ageValidation.valid}
+          onClick={() => onComplete({ age: parseInt(age, 10), sex })}
           className="w-full"
         >
           Continue calibration
@@ -78,3 +106,5 @@ export const DemographicsScreen = ({ onComplete }: DemographicsScreenProps) => {
     </motion.div>
   );
 };
+
+export const DemographicsScreen = React.memo(DemographicsScreenComponent);
