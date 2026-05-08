@@ -122,7 +122,7 @@ export const ContraindicationReport: React.FC<ContraindicationReportProps> = ({
         </div>
         <div className="space-y-2">
           {absoluteContras.map(c => (
-            <ContraindicationCard key={c.id} item={c} />
+            <ContraindicationCard item={c} />
           ))}
         </div>
       </div>
@@ -138,7 +138,7 @@ export const ContraindicationReport: React.FC<ContraindicationReportProps> = ({
           </div>
           <div className="space-y-2">
             {relativeContras.map(c => (
-              <ContraindicationCard key={c.id} item={c} />
+              <ContraindicationCard item={c} />
             ))}
           </div>
         </div>

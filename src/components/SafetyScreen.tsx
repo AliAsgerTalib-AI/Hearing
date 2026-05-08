@@ -7,7 +7,7 @@ import { ScreeningResponse } from '../types/contraindications';
 import { ContraindicationReport } from './ContraindicationReport';
 
 interface SafetyScreenProps {
-  onAccept: () => void;
+  onAccept: (responses: ScreeningResponse) => void;
   onCancel: () => void;
 }
 
@@ -233,7 +233,7 @@ const SafetyScreenComponent = ({ onAccept, onCancel }: SafetyScreenProps) => {
         <Button
           onClick={() => {
             if (canProceed) {
-              onAccept();
+              onAccept(responses);
             }
           }}
           disabled={!canProceed}
