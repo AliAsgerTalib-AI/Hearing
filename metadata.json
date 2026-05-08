@@ -1,0 +1,6 @@
+{
+  "name": "Longevity Hearing",
+  "description": "A sophisticated hearing health and auditory exercise platform using medical-grade pure-tone audiometry.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["Web Audio API", "Health Tracking"]
+}

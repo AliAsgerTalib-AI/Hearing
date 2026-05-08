@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif", ui-serif, Georgia, serif;
+
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+  
+  /* Serenity Teal/Petrol */
+  --color-primary: #0F172A;
+  --color-primary-foreground: #FFFFFF;
+  
+  --color-accent-teal: #0D9488;
+  --color-accent-gold: #B59E6A;
+  --color-accent-sage: #94A3B8;
+
+  --radius-lg: 1.25rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+.glass-card {
+  @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm transition-all duration-300;
+}
+
+.btn-primary {
+  @apply bg-primary text-primary-foreground h-14 rounded-full px-8 font-medium transition-transform active:scale-95;
+}
+
+.nav-item-active {
+  @apply text-primary font-semibold;
+}
+
+.nav-item {
+  @apply text-accent-sage transition-colors hover:text-primary;
+}
