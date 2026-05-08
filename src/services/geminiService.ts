@@ -9,6 +9,10 @@ const getApiKey = (): string => {
   return key;
 };
 
+const getModelName = (): string => {
+  return import.meta.env.VITE_GEMINI_MODEL || "gemini-3-flash-preview";
+};
+
 const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 export interface Exercise {
@@ -86,7 +90,7 @@ export async function generateAuditoryPlan(results: TestResult[], demographics?:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: getModelName(),
       contents: prompt,
       config: {
         systemInstruction: "You are a world-class Audiologist and Neuroscientist specializing in Auditory Training and Brain-Ear connectivity.",
